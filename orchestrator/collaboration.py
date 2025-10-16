@@ -351,6 +351,8 @@ def invoke_auto_create_or_sync_fork():
                     if deleted > 0:
                         print_success(f"✅ Deleted {deleted} repo(s)")
                         time.sleep(3)
+                else:
+                    print_info("ℹ️  No matching repositories found to delete.")
                 
                 print_info("🍴 Creating new fork...")
                 if create_new_fork(username, token, source_repo, fork_repo):
@@ -382,6 +384,8 @@ def invoke_auto_create_or_sync_fork():
                     if deleted > 0:
                         print_success(f"✅ Deleted {deleted} repo(s)")
                         time.sleep(3)
+                else:
+                    print_info("ℹ️  No matching repositories found to delete.")
                 
                 print_info("🍴 Creating new fork...")
                 if create_new_fork(username, token, source_repo, fork_repo):
