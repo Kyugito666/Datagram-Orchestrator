@@ -1,6 +1,7 @@
 # orchestrator/setup.py
 
 import getpass
+import time  # Import modul time
 from pathlib import Path
 
 from .helpers import (
@@ -120,9 +121,12 @@ def validate_github_tokens():
 
     for i, token in enumerate(tokens, 1):
         print(f"[{i}/{len(tokens)}] Validating...", end="", flush=True)
+        
+        # Cek cache dulu untuk mengurangi panggilan API
         if token in token_cache:
-            print_success(f" ✅ @{token_cache[token]} (cached)")
+            print_success(f" ✅ @{token_cache[token]} (from cache)")
             valid_tokens.append(token)
+            time.sleep(0.1) # Jeda singkat bahkan untuk cache
             continue
 
         result = run_gh_api("api user --jq .login", token, max_retries=2)
@@ -132,13 +136,22 @@ def validate_github_tokens():
             token_cache[token] = username
             valid_tokens.append(token)
         else:
-            print_error(f" ❌ Invalid")
+            # Berikan pesan error yang lebih informatif
+            error_msg = result.get('error', 'Unknown error').split('\n')[0]
+            print_error(f" ❌ Invalid ({error_msg})")
             invalid_tokens.append(token)
+            
+        # ==================================================================
+        # PERBAIKAN UTAMA: Tambahkan jeda 1 detik di sini
+        # Ini mencegah GitHub API rate limiting saat memvalidasi banyak token.
+        time.sleep(1)
+        # ==================================================================
 
     save_json_file(TOKEN_CACHE_FILE, token_cache)
 
+    # Hanya tulis kembali token yang valid ke file tokens.txt
     if valid_tokens:
         TOKENS_FILE.write_text("\n".join(valid_tokens), encoding="utf-8")
         print_success(f"\nValidasi selesai! Valid: {len(valid_tokens)}/{len(tokens)}. Token invalid otomatis dihapus.")
     else:
-        print_warning("Tidak ada token valid.")
+        print_warning("Tidak ada token valid yang ditemukan.")
